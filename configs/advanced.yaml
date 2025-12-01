@@ -1,0 +1,136 @@
+# ShadowGate Advanced Configuration
+# Demonstrates Phase 2 features: GeoIP, ASN, rate limiting, honeypots
+
+global:
+  log:
+    level: info
+    format: json
+    output: /var/log/shadowgate.log
+  geoip_db_path: /opt/shadowgate/GeoLite2-Country.mmdb
+  metrics_addr: ":9090"
+
+profiles:
+  - id: protected-api
+    listeners:
+      - addr: "0.0.0.0:443"
+        protocol: https
+        tls:
+          cert_file: /etc/shadowgate/certs/server.crt
+          key_file: /etc/shadowgate/certs/server.key
+
+    backends:
+      - name: api-primary
+        url: https://127.0.0.1:8443
+        weight: 10
+        timeout: 30s
+      - name: api-secondary
+        url: https://127.0.0.1:8444
+        weight: 5
+        timeout: 30s
+
+    rules:
+      allow:
+        and:
+          # Only allow from specific countries
+          - type: geo_allow
+            countries: ["US", "CA", "GB", "DE", "FR"]
+
+          # Only allow TLS 1.2+
+          - type: tls_version
+            tls_min_version: "1.2"
+
+          # Only allow specific HTTP methods
+          - type: method_allow
+            methods: ["GET", "POST", "PUT"]
+
+          # Require browser-like User-Agent
+          - type: ua_whitelist
+            patterns:
+              - ".*Mozilla.*"
+              - ".*Chrome.*"
+              - ".*Safari.*"
+
+          # Rate limit: 100 requests per minute per IP
+          - type: rate_limit
+            max_requests: 100
+            window: "1m"
+
+      deny:
+        or:
+          # Block known scanner ASNs
+          - type: asn_deny
+            asns: [14061, 16276, 20473]  # DigitalOcean, OVH, Vultr (example)
+
+          # Block scanner User-Agents
+          - type: ua_blacklist
+            patterns:
+              - "(?i).*curl.*"
+              - "(?i).*wget.*"
+              - "(?i).*python.*"
+              - "(?i).*scanner.*"
+              - "(?i).*bot.*"
+              - "(?i).*nmap.*"
+              - "(?i).*nikto.*"
+
+          # Block suspicious paths
+          - type: path_deny
+            paths:
+              - "(?i).*\\.php$"
+              - "(?i).*\\.asp$"
+              - "(?i)/wp-.*"
+              - "(?i)/admin.*"
+              - "(?i)/\\.git.*"
+              - "(?i)/\\.env.*"
+
+    decoy:
+      mode: static
+      status_code: 200
+      body: |
+        <!DOCTYPE html>
+        <html>
+        <head><title>API Gateway</title></head>
+        <body>
+        <h1>Service Temporarily Unavailable</h1>
+        <p>Please try again later.</p>
+        </body>
+        </html>
+
+    shaping:
+      delay_min: 50ms
+      delay_max: 200ms
+
+  - id: honeypot
+    # Dedicated honeypot profile for catching scanners
+    listeners:
+      - addr: "0.0.0.0:8080"
+        protocol: http
+
+    backends:
+      - name: dummy
+        url: http://127.0.0.1:1
+        weight: 1
+
+    rules:
+      # Deny everything - this is a honeypot
+      deny:
+        or:
+          - type: ip_deny
+            cidrs:
+              - "0.0.0.0/0"
+
+    decoy:
+      mode: static
+      status_code: 200
+      body: |
+        <!DOCTYPE html>
+        <html>
+        <head><title>Admin Panel</title></head>
+        <body>
+        <h1>Admin Login</h1>
+        <form action="/login" method="post">
+          <input type="text" name="username" placeholder="Username">
+          <input type="password" name="password" placeholder="Password">
+          <button type="submit">Login</button>
+        </form>
+        </body>
+        </html>

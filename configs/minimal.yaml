@@ -1,0 +1,33 @@
+# ShadowGate Minimal Configuration
+# Simplest setup for basic reverse proxy with IP filtering
+
+global:
+  log:
+    level: info
+    format: json
+    output: stdout
+
+profiles:
+  - id: default
+    listeners:
+      - addr: "0.0.0.0:8080"
+        protocol: http
+
+    backends:
+      - name: backend
+        url: http://127.0.0.1:9000
+        weight: 10
+
+    rules:
+      allow:
+        rule:
+          type: ip_allow
+          cidrs:
+            - "10.0.0.0/8"
+            - "192.168.0.0/16"
+            - "172.16.0.0/12"
+
+    decoy:
+      mode: static
+      status_code: 403
+      body: "Access Denied"

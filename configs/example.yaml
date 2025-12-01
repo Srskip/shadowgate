@@ -1,0 +1,43 @@
+global:
+  log:
+    level: info
+    format: json
+    output: stdout
+
+profiles:
+  - id: default
+    listeners:
+      - addr: "0.0.0.0:8080"
+        protocol: http
+
+    backends:
+      - name: primary
+        url: http://127.0.0.1:9000
+        weight: 10
+        timeout: 30s
+
+    rules:
+      allow:
+        and:
+          - type: ip_allow
+            cidrs:
+              - "10.0.0.0/8"
+              - "192.168.0.0/16"
+          - type: ua_match
+            patterns:
+              - ".*Chrome.*"
+              - ".*Firefox.*"
+      deny:
+        or:
+          - type: ip_deny
+            cidrs:
+              - "0.0.0.0/8"
+
+    decoy:
+      mode: static
+      status_code: 200
+      body: "<html><body>Welcome</body></html>"
+
+    shaping:
+      delay_min: 10ms
+      delay_max: 50ms

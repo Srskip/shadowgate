@@ -1,0 +1,264 @@
+# ShadowGate
+
+A high-performance stealth redirector and deception gateway written in Go. ShadowGate sits in front of backend servers to filter traffic, serve decoys to unwanted visitors, and protect infrastructure from scanners and automated tools.
+
+## Features
+
+### Traffic Filtering
+- **IP/CIDR Rules** - Allow/deny based on IP addresses and subnets (IPv4/IPv6)
+- **GeoIP Rules** - Filter by country using MaxMind GeoIP database
+- **ASN Rules** - Filter by Autonomous System Number
+- **User-Agent Rules** - Regex-based whitelist/blacklist patterns
+- **HTTP Rules** - Method, path, and header filtering with regex support
+- **TLS Rules** - Filter by TLS version and SNI patterns
+- **Rate Limiting** - Per-IP request rate limiting with configurable windows
+- **Time Windows** - Allow/deny based on time of day and day of week
+- **Boolean Logic** - Combine rules with AND, OR, NOT operators
+
+### Deception & Proxying
+- **Reverse Proxy** - HTTP/HTTPS proxying to backend servers
+- **Load Balancing** - Round-robin and weighted backend selection
+- **Health Checks** - Automatic backend health monitoring and failover
+- **Static Decoys** - Serve configurable fake responses to blocked traffic
+- **Redirects** - Send 3xx redirects to external sites
+- **Tarpit** - Slow responses to waste attacker resources
+- **Honeypot Paths** - Detect and log access to sensitive paths
+
+### Operations
+- **Structured Logging** - JSON logging with request metadata
+- **Metrics API** - Real-time statistics via REST endpoint
+- **Admin API** - Health, status, backends, and reload endpoints
+- **Hot Reload** - SIGHUP-based configuration reload without restart
+- **TLS Termination** - HTTPS listeners with configurable certificates
+
+## Quick Start
+
+### Build
+
+```bash
+# Clone repository
+git clone https://github.com/your-org/shadowgate.git
+cd shadowgate
+
+# Build binary
+make build
+
+# Run tests
+make test
+```
+
+### Run
+
+```bash
+# Validate configuration
+./bin/shadowgate -validate -config configs/example.yaml
+
+# Run with configuration
+./bin/shadowgate -config configs/example.yaml
+
+# Run with version info
+./bin/shadowgate -version
+```
+
+### Docker
+
+```bash
+# Build image
+make docker
+
+# Run container
+docker run -d \
+  --name shadowgate \
+  -p 8080:8080 \
+  -p 9090:9090 \
+  -v /path/to/config.yaml:/etc/shadowgate/config.yaml:ro \
+  shadowgate:latest -config /etc/shadowgate/config.yaml
+```
+
+## Configuration
+
+Minimal configuration example:
+
+```yaml
+global:
+  log:
+    level: info
+    format: json
+    output: stdout
+  metrics_addr: "127.0.0.1:9090"
+
+profiles:
+  - id: default
+    listeners:
+      - addr: "0.0.0.0:8080"
+        protocol: http
+
+    backends:
+      - name: backend1
+        url: http://127.0.0.1:9000
+        weight: 10
+
+    rules:
+      allow:
+        rule:
+          type: ip_allow
+          cidrs:
+            - "10.0.0.0/8"
+            - "192.168.0.0/16"
+
+    decoy:
+      mode: static
+      status_code: 404
+      body: "<html><body>Not Found</body></html>"
+```
+
+See [docs/CONFIG.md](docs/CONFIG.md) for complete configuration reference.
+
+## Rule Types
+
+| Type | Description |
+|------|-------------|
+| `ip_allow` / `ip_deny` | Filter by IP address or CIDR range |
+| `geo_allow` / `geo_deny` | Filter by country (requires GeoIP database) |
+| `asn_allow` / `asn_deny` | Filter by AS number (requires GeoIP database) |
+| `ua_whitelist` / `ua_blacklist` | Filter by User-Agent regex patterns |
+| `method_allow` / `method_deny` | Filter by HTTP method |
+| `path_allow` / `path_deny` | Filter by URL path regex patterns |
+| `header_allow` / `header_deny` | Filter by HTTP header presence/value |
+| `tls_version` | Filter by minimum/maximum TLS version |
+| `sni_allow` / `sni_deny` | Filter by TLS SNI patterns |
+| `rate_limit` | Limit requests per source IP |
+| `time_window` | Allow during specific time windows |
+
+## Admin API
+
+The Admin API provides endpoints for monitoring and management:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check (returns `{"status": "ok"}`) |
+| `/status` | GET | System status with version, uptime, memory |
+| `/metrics` | GET | Request statistics and counters |
+| `/backends` | GET | Backend health status |
+| `/reload` | POST | Trigger configuration reload |
+
+See [docs/API.md](docs/API.md) for complete API reference.
+
+## Documentation
+
+- [Configuration Reference](docs/CONFIG.md) - All configuration options
+- [Admin API Reference](docs/API.md) - REST API documentation
+- [Operations Runbook](docs/OPERATIONS.md) - Deployment and maintenance
+
+## Project Structure
+
+```
+shadowgate/
+├── cmd/shadowgate/      # Main application entry point
+├── internal/
+│   ├── admin/           # Admin API server
+│   ├── config/          # Configuration parsing and validation
+│   ├── decision/        # Decision engine (allow/deny/redirect)
+│   ├── decoy/           # Deception strategies
+│   ├── gateway/         # Main HTTP handler
+│   ├── geoip/           # MaxMind GeoIP integration
+│   ├── honeypot/        # Honeypot path detection
+│   ├── listener/        # Network listeners
+│   ├── logging/         # Structured logging
+│   ├── metrics/         # Metrics collection
+│   ├── profile/         # Profile management
+│   ├── proxy/           # Backend proxy and load balancing
+│   └── rules/           # Rule engine and implementations
+├── configs/             # Example configurations
+├── deploy/
+│   ├── ansible/         # Ansible role and playbook
+│   ├── systemd/         # systemd unit file
+│   └── terraform/       # Terraform module for AWS
+├── docs/                # Documentation
+├── Dockerfile
+├── Makefile
+└── README.md
+```
+
+## Example Configurations
+
+| File | Use Case |
+|------|----------|
+| `configs/minimal.yaml` | Simple reverse proxy with IP filtering |
+| `configs/example.yaml` | Basic configuration with common options |
+| `configs/c2-front.yaml` | C2 server protection |
+| `configs/phishing-front.yaml` | Phishing infrastructure protection |
+| `configs/payload-delivery.yaml` | Payload server with strict filtering |
+| `configs/advanced.yaml` | All advanced filtering features |
+
+## Development
+
+### Prerequisites
+
+- Go 1.21 or later
+- Make
+
+### Building
+
+```bash
+# Build for current platform
+make build
+
+# Run tests
+make test
+
+# Run tests with coverage
+make test-cover
+
+# Build Docker image
+make docker
+```
+
+### Testing
+
+```bash
+# Run all tests
+go test ./...
+
+# Run with verbose output
+go test -v ./...
+
+# Run benchmarks
+go test -bench=. ./internal/rules/
+go test -bench=. ./internal/proxy/
+
+# Run fuzz tests (2 seconds each)
+go test -fuzz=FuzzIPRule -fuzztime=2s ./internal/rules/
+```
+
+## Requirements
+
+- **Go 1.21+** for building
+- **MaxMind GeoIP database** (optional, for geo/ASN rules)
+- **TLS certificates** (for HTTPS listeners)
+
+## Security Considerations
+
+- Run as non-root user in production
+- Restrict Admin API to localhost or trusted networks
+- Use TLS for all external-facing listeners
+- Regularly update GeoIP database
+- Review logs for suspicious activity
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Contributing
+
+Contributions are welcome. Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Add tests for new functionality
+4. Ensure all tests pass
+5. Submit a pull request
+
+## Disclaimer
+
+This software is provided for legitimate security testing and infrastructure protection purposes. Users are responsible for ensuring compliance with applicable laws and regulations. The authors are not responsible for misuse of this software.

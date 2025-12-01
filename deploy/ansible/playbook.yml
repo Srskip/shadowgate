@@ -1,0 +1,85 @@
+# ShadowGate Deployment Playbook
+# Example usage: ansible-playbook -i inventory playbook.yml
+---
+- name: Deploy ShadowGate
+  hosts: shadowgate_servers
+  become: true
+  vars:
+    shadowgate_tls_enabled: true
+    shadowgate_tls_cert_file: "files/server.crt"
+    shadowgate_tls_key_file: "files/server.key"
+    shadowgate_geoip_enabled: true
+
+    shadowgate_profiles:
+      - id: "c2-front"
+        listener:
+          addr: ":443"
+          tls:
+            cert_file: "/etc/shadowgate/server.crt"
+            key_file: "/etc/shadowgate/server.key"
+
+        backends:
+          - name: "c2-primary"
+            url: "http://10.0.1.10:8080"
+            weight: 10
+          - name: "c2-secondary"
+            url: "http://10.0.1.11:8080"
+            weight: 5
+
+        health_check:
+          enabled: true
+          interval: "10s"
+          timeout: "5s"
+          path: "/health"
+
+        rules:
+          # Block known scanners and cloud providers
+          - type: "ua_blacklist"
+            patterns:
+              - "(?i)nmap"
+              - "(?i)nikto"
+              - "(?i)masscan"
+              - "(?i)zgrab"
+
+          # GeoIP filtering - only allow specific countries
+          - type: "geo_allow"
+            countries:
+              - "US"
+              - "CA"
+              - "GB"
+
+          # Block datacenter ASNs
+          - type: "asn_deny"
+            asns:
+              - 14061  # DigitalOcean
+              - 16276  # OVH
+              - 14618  # AWS
+
+          # Rate limit per source IP
+          - type: "rate_limit"
+            requests_per_second: 10
+            burst: 20
+
+        decoy:
+          type: "static"
+          content: |
+            <!DOCTYPE html>
+            <html>
+            <head><title>404 Not Found</title></head>
+            <body>
+            <h1>Not Found</h1>
+            <p>The requested URL was not found on this server.</p>
+            </body>
+            </html>
+          content_type: "text/html"
+          status_code: 404
+
+        honeypot_paths:
+          - "/admin"
+          - "/wp-admin"
+          - "/phpmyadmin"
+          - "/.git"
+          - "/.env"
+
+  roles:
+    - shadowgate

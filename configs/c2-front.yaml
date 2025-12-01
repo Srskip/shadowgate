@@ -1,0 +1,96 @@
+# ShadowGate C2 Front Configuration
+# Protects a C2 server by filtering traffic and serving decoys to scanners
+
+global:
+  log:
+    level: info
+    format: json
+    output: /var/log/shadowgate.log
+
+profiles:
+  - id: c2-https
+    listeners:
+      - addr: "0.0.0.0:443"
+        protocol: https
+        tls:
+          cert_file: /etc/shadowgate/certs/server.crt
+          key_file: /etc/shadowgate/certs/server.key
+
+    backends:
+      - name: c2-primary
+        url: https://127.0.0.1:8443
+        weight: 10
+        timeout: 30s
+
+    rules:
+      # Allow only from specific IP ranges with browser-like User-Agents
+      allow:
+        and:
+          - type: ip_allow
+            cidrs:
+              - "10.0.0.0/8"       # Internal network
+              - "192.168.0.0/16"   # Private range
+              # Add target organization ranges here
+          - type: ua_whitelist
+            patterns:
+              - ".*Mozilla.*"
+              - ".*Chrome.*"
+              - ".*Firefox.*"
+              - ".*Safari.*"
+              - ".*Edge.*"
+
+      # Explicitly deny known scanner/tool patterns
+      deny:
+        or:
+          - type: ua_blacklist
+            patterns:
+              - ".*curl.*"
+              - ".*wget.*"
+              - ".*python.*"
+              - ".*requests.*"
+              - ".*scanner.*"
+              - ".*bot.*"
+              - ".*nmap.*"
+              - ".*masscan.*"
+              - ".*shodan.*"
+              - ".*censys.*"
+
+    decoy:
+      mode: static
+      status_code: 200
+      body: |
+        <!DOCTYPE html>
+        <html>
+        <head><title>Welcome</title></head>
+        <body>
+        <h1>Welcome to our website</h1>
+        <p>This site is under construction.</p>
+        </body>
+        </html>
+
+    shaping:
+      delay_min: 50ms
+      delay_max: 150ms
+
+  - id: c2-http-redirect
+    # Redirect HTTP to HTTPS
+    listeners:
+      - addr: "0.0.0.0:80"
+        protocol: http
+
+    backends:
+      - name: dummy
+        url: http://127.0.0.1:1
+        weight: 1
+
+    rules:
+      # Deny all - just redirect
+      deny:
+        or:
+          - type: ip_deny
+            cidrs:
+              - "0.0.0.0/0"
+
+    decoy:
+      mode: redirect
+      redirect_to: https://example.com

@@ -1,0 +1,130 @@
+# ShadowGate Payload Delivery Configuration
+# Protects a payload/stager delivery server with strict filtering
+
+global:
+  log:
+    level: info
+    format: json
+    output: /var/log/shadowgate/payload.log
+  geoip_db_path: /opt/geoip/GeoLite2-Country.mmdb
+  metrics_addr: "127.0.0.1:9091"
+
+profiles:
+  - id: payload-https
+    listeners:
+      - addr: "0.0.0.0:443"
+        protocol: https
+        tls:
+          cert_file: /etc/shadowgate/certs/payload.crt
+          key_file: /etc/shadowgate/certs/payload.key
+
+    backends:
+      - name: payload-server
+        url: http://127.0.0.1:8888
+        weight: 10
+        timeout: 60s
+
+    rules:
+      # Strict deny rules for sandbox and analysis
+      deny:
+        or:
+          # Block analysis tools
+          - type: ua_blacklist
+            patterns:
+              - "(?i)sandbox"
+              - "(?i)virus"
+              - "(?i)malware"
+              - "(?i)analysis"
+              - "(?i)cuckoo"
+              - "(?i)joe"
+              - "(?i)hybrid"
+              - "(?i)any\\.run"
+              - "(?i)threatgrid"
+              - "(?i)vmray"
+              # Block common security tools
+              - "(?i)curl"
+              - "(?i)wget"
+              - "(?i)python"
+              - "(?i)powershell"
+              - "(?i)scanner"
+
+          # Block security company ASNs
+          - type: asn_deny
+            asns:
+              - 14618   # AWS (sandbox environments)
+              - 15169   # Google
+              - 8075    # Microsoft
+              - 14061   # DigitalOcean
+              - 16276   # OVH
+              - 396982  # Google Cloud
+              - 63949   # Linode
+
+          # Block security company countries
+          - type: geo_deny
+            countries:
+              - "IL"    # Israel (many security companies)
+              - "RU"    # Russia
+              - "CN"    # China
+              - "KP"    # North Korea
+
+          # Block suspicious paths
+          - type: path_deny
+            paths:
+              - "^/admin"
+              - "^/debug"
+              - "^/test"
+              - "^/sample"
+              - "\\.txt$"
+
+      # Strict allow rules - must match ALL
+      allow:
+        and:
+          # Only target countries
+          - type: geo_allow
+            countries:
+              - "US"
+              - "CA"
+              - "GB"
+              - "DE"
+              - "FR"
+
+          # Time-based: only during business hours
+          - type: time_window
+            time_windows:
+              - days: ["mon", "tue", "wed", "thu", "fri"]
+                start: "08:00"
+                end: "18:00"
+
+          # Only GET requests for downloads
+          - type: method_allow
+            methods:
+              - "GET"
+
+          # Only specific paths
+          - type: path_allow
+            paths:
+              - "^/d/"
+              - "^/download/"
+              - "^/update/"
+
+          # Strict rate limiting
+          - type: rate_limit
+            max_requests: 5
+            window: "1h"
+
+    decoy:
+      mode: static
+      status_code: 503
+      body: |
+        <!DOCTYPE html>
+        <html>
+        <head><title>Service Unavailable</title></head>
+        <body>
+        <h1>Service Temporarily Unavailable</h1>
+        <p>The server is currently undergoing maintenance. Please try again later.</p>
+        </body>
+        </html>
+
+    shaping:
+      delay_min: 100ms
+      delay_max: 500ms

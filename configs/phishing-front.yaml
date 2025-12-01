@@ -1,0 +1,127 @@
+# ShadowGate Phishing Front Configuration
+# Protects a phishing server with geo-blocking and scanner detection
+
+global:
+  log:
+    level: info
+    format: json
+    output: /var/log/shadowgate/phishing.log
+  geoip_db_path: /opt/geoip/GeoLite2-Country.mmdb
+  metrics_addr: "127.0.0.1:9090"
+
+profiles:
+  - id: phishing-https
+    listeners:
+      - addr: "0.0.0.0:443"
+        protocol: https
+        tls:
+          cert_file: /etc/shadowgate/certs/phishing.crt
+          key_file: /etc/shadowgate/certs/phishing.key
+
+    backends:
+      - name: gophish
+        url: http://127.0.0.1:8080
+        weight: 10
+
+    rules:
+      # Block security researchers and cloud scanners first
+      deny:
+        or:
+          # Block scanner User-Agents
+          - type: ua_blacklist
+            patterns:
+              - "(?i)nmap"
+              - "(?i)nikto"
+              - "(?i)sqlmap"
+              - "(?i)burp"
+              - "(?i)owasp"
+              - "(?i)acunetix"
+              - "(?i)nessus"
+              - "(?i)qualys"
+              - "(?i)tenable"
+              - "(?i)bot"
+              - "(?i)spider"
+              - "(?i)crawler"
+              - "(?i)curl"
+              - "(?i)wget"
+              - "(?i)python-requests"
+              - "(?i)go-http"
+              - "(?i)java"
+              - "(?i)libwww"
+
+          # Block cloud provider IP ranges (by ASN)
+          - type: asn_deny
+            asns:
+              - 14061   # DigitalOcean
+              - 16276   # OVH
+              - 14618   # AWS
+              - 15169   # Google Cloud
+              - 8075    # Microsoft Azure
+              - 13335   # Cloudflare
+              - 20473   # Choopa/Vultr
+              - 63949   # Linode
+
+          # Block honeypot paths
+          - type: path_deny
+            paths:
+              - "^/admin"
+              - "^/wp-admin"
+              - "^/phpmyadmin"
+              - "^/\\.git"
+              - "^/\\.env"
+              - "^/config"
+              - "^/backup"
+              - "(?i)\\.sql$"
+              - "(?i)\\.bak$"
+
+      # Allow only from target countries
+      allow:
+        and:
+          - type: geo_allow
+            countries:
+              - "US"
+              - "CA"
+          # Rate limit per source
+          - type: rate_limit
+            max_requests: 30
+            window: "1m"
+          # Only allow browser-like methods
+          - type: method_allow
+            methods:
+              - "GET"
+              - "POST"
+
+    decoy:
+      mode: static
+      status_code: 404
+      body: |
+        <!DOCTYPE html>
+        <html>
+        <head><title>404 Not Found</title></head>
+        <body>
+        <h1>Not Found</h1>
+        <p>The requested URL was not found on this server.</p>
+        </body>
+        </html>
+
+  # HTTP to HTTPS redirect
+  - id: phishing-http
+    listeners:
+      - addr: "0.0.0.0:80"
+        protocol: http
+
+    backends:
+      - name: dummy
+        url: http://127.0.0.1:1
+        weight: 1
+
+    rules:
+      allow:
+        rule:
+          type: ip_allow
+          cidrs:
+            - "0.0.0.0/0"
+
+    decoy:
+      mode: redirect
+      redirect_to: "https://${HOST}${REQUEST_URI}"
