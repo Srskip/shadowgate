@@ -1,0 +1,29 @@
+# ShadowGate Ansible Role - Metadata
+---
+galaxy_info:
+  author: ShadowGate Team
+  description: Deploy and configure ShadowGate stealth redirector
+  license: MIT
+  min_ansible_version: "2.10"
+
+  platforms:
+    - name: EL
+      versions:
+        - "8"
+        - "9"
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+
+  galaxy_tags:
+    - security
+    - proxy
+    - redteam
+    - infrastructure
+
+dependencies: []

@@ -1,0 +1,20 @@
+# ShadowGate Ansible Role - Handlers
+---
+
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart shadowgate
+  ansible.builtin.systemd:
+    name: "{{ shadowgate_service_name }}"
+    state: restarted
+  when: shadowgate_service_state == 'started'
+
+- name: Reload shadowgate
+  ansible.builtin.uri:
+    url: "http://{{ shadowgate_admin_addr }}/reload"
+    method: POST
+    status_code: 200
+  when: shadowgate_admin_enabled and shadowgate_service_state == 'started'
+  ignore_errors: true

@@ -1,0 +1,163 @@
+# ShadowGate Configuration
+# Managed by Ansible - DO NOT EDIT MANUALLY
+---
+
+global:
+  log:
+    level: {{ shadowgate_log_level }}
+    format: {{ shadowgate_log_format }}
+    file: {{ shadowgate_log_file }}
+{% if shadowgate_geoip_enabled %}
+  geoip_db_path: {{ shadowgate_geoip_db_path }}
+{% endif %}
+{% if shadowgate_metrics_enabled %}
+  metrics_addr: {{ shadowgate_metrics_addr }}
+{% endif %}
+{% if shadowgate_admin_enabled %}
+  admin_addr: {{ shadowgate_admin_addr }}
+{% endif %}
+
+profiles:
+{% for profile in shadowgate_profiles %}
+  - id: {{ profile.id }}
+    listener:
+      addr: "{{ profile.listener.addr | default(':8080') }}"
+{% if profile.listener.tls is defined and profile.listener.tls %}
+      tls:
+        cert_file: {{ profile.listener.tls.cert_file | default(shadowgate_config_dir + '/server.crt') }}
+        key_file: {{ profile.listener.tls.key_file | default(shadowgate_config_dir + '/server.key') }}
+{% endif %}
+
+{% if profile.backends is defined %}
+    backends:
+{% for backend in profile.backends %}
+      - name: {{ backend.name }}
+        url: {{ backend.url }}
+{% if backend.weight is defined %}
+        weight: {{ backend.weight }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if profile.health_check is defined %}
+    health_check:
+      enabled: {{ profile.health_check.enabled | default(true) | lower }}
+      interval: {{ profile.health_check.interval | default(shadowgate_health_check_interval) }}
+      timeout: {{ profile.health_check.timeout | default(shadowgate_health_check_timeout) }}
+{% if profile.health_check.path is defined %}
+      path: {{ profile.health_check.path }}
+{% endif %}
+{% endif %}
+
+{% if profile.rules is defined %}
+    rules:
+{% for rule in profile.rules %}
+      - type: {{ rule.type }}
+{% if rule.cidrs is defined %}
+        cidrs:
+{% for cidr in rule.cidrs %}
+          - {{ cidr }}
+{% endfor %}
+{% endif %}
+{% if rule.patterns is defined %}
+        patterns:
+{% for pattern in rule.patterns %}
+          - {{ pattern }}
+{% endfor %}
+{% endif %}
+{% if rule.countries is defined %}
+        countries:
+{% for country in rule.countries %}
+          - {{ country }}
+{% endfor %}
+{% endif %}
+{% if rule.asns is defined %}
+        asns:
+{% for asn in rule.asns %}
+          - {{ asn }}
+{% endfor %}
+{% endif %}
+{% if rule.methods is defined %}
+        methods:
+{% for method in rule.methods %}
+          - {{ method }}
+{% endfor %}
+{% endif %}
+{% if rule.paths is defined %}
+        paths:
+{% for path in rule.paths %}
+          - {{ path }}
+{% endfor %}
+{% endif %}
+{% if rule.headers is defined %}
+        headers:
+{% for header in rule.headers %}
+          - name: {{ header.name }}
+            pattern: {{ header.pattern }}
+{% endfor %}
+{% endif %}
+{% if rule.sni_patterns is defined %}
+        sni_patterns:
+{% for pattern in rule.sni_patterns %}
+          - {{ pattern }}
+{% endfor %}
+{% endif %}
+{% if rule.min_version is defined %}
+        min_version: {{ rule.min_version }}
+{% endif %}
+{% if rule.max_version is defined %}
+        max_version: {{ rule.max_version }}
+{% endif %}
+{% if rule.requests_per_second is defined %}
+        requests_per_second: {{ rule.requests_per_second }}
+{% endif %}
+{% if rule.burst is defined %}
+        burst: {{ rule.burst }}
+{% endif %}
+{% if rule.start_time is defined %}
+        start_time: "{{ rule.start_time }}"
+{% endif %}
+{% if rule.end_time is defined %}
+        end_time: "{{ rule.end_time }}"
+{% endif %}
+{% if rule.days_of_week is defined %}
+        days_of_week:
+{% for day in rule.days_of_week %}
+          - {{ day }}
+{% endfor %}
+{% endif %}
+{% if rule.timezone is defined %}
+        timezone: {{ rule.timezone }}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% if profile.decoy is defined %}
+    decoy:
+      type: {{ profile.decoy.type | default('static') }}
+{% if profile.decoy.content is defined %}
+      content: |
+        {{ profile.decoy.content | indent(8) }}
+{% endif %}
+{% if profile.decoy.content_type is defined %}
+      content_type: {{ profile.decoy.content_type }}
+{% endif %}
+{% if profile.decoy.status_code is defined %}
+      status_code: {{ profile.decoy.status_code }}
+{% endif %}
+{% if profile.decoy.redirect_url is defined %}
+      redirect_url: {{ profile.decoy.redirect_url }}
+{% endif %}
+{% if profile.decoy.delay is defined %}
+      delay: {{ profile.decoy.delay }}
+{% endif %}
+{% endif %}
+
+{% if profile.honeypot_paths is defined %}
+    honeypot_paths:
+{% for path in profile.honeypot_paths %}
+      - {{ path }}
+{% endfor %}
+{% endif %}
+
+{% endfor %}

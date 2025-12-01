@@ -5,7 +5,7 @@ bin/
 *.dll
 *.so
 *.dylib
-shadowgate
+/shadowgate
 
 # Test binary, built with `go test -c`
 *.test

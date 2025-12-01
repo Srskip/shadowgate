@@ -1,0 +1,75 @@
+# ShadowGate Ansible Role - Default Variables
+---
+
+# Installation
+shadowgate_version: "latest"
+shadowgate_binary_url: ""
+shadowgate_user: "shadowgate"
+shadowgate_group: "shadowgate"
+shadowgate_install_dir: "/opt/shadowgate"
+shadowgate_config_dir: "/etc/shadowgate"
+shadowgate_log_dir: "/var/log/shadowgate"
+shadowgate_data_dir: "/var/lib/shadowgate"
+
+# Service
+shadowgate_service_name: "shadowgate"
+shadowgate_service_enabled: true
+shadowgate_service_state: "started"
+
+# Listener configuration
+shadowgate_http_port: 8080
+shadowgate_https_port: 8443
+shadowgate_admin_port: 9090
+
+# TLS configuration
+shadowgate_tls_enabled: false
+shadowgate_tls_cert_file: ""
+shadowgate_tls_key_file: ""
+
+# Logging
+shadowgate_log_level: "info"
+shadowgate_log_format: "json"
+shadowgate_log_file: "{{ shadowgate_log_dir }}/shadowgate.log"
+
+# GeoIP (optional)
+shadowgate_geoip_enabled: false
+shadowgate_geoip_db_path: "{{ shadowgate_data_dir }}/GeoLite2-Country.mmdb"
+
+# Admin API
+shadowgate_admin_enabled: true
+shadowgate_admin_addr: "127.0.0.1:{{ shadowgate_admin_port }}"
+
+# Metrics
+shadowgate_metrics_enabled: true
+shadowgate_metrics_addr: "127.0.0.1:9091"
+
+# Health checks
+shadowgate_health_check_enabled: true
+shadowgate_health_check_interval: "10s"
+shadowgate_health_check_timeout: "5s"
+
+# Profiles (override in playbook)
+shadowgate_profiles: []
+
+# Example profile structure:
+# shadowgate_profiles:
+#   - id: "default"
+#     listener:
+#       addr: ":8080"
+#     backends:
+#       - name: "backend1"
+#         url: "http://127.0.0.1:8000"
+#         weight: 10
+#     rules:
+#       - type: "ip_allow"
+#         cidrs:
+#           - "10.0.0.0/8"
+#     decoy:
+#       type: "static"
+#       content: "<html><body>Not Found</body></html>"
+#       content_type: "text/html"
+#       status_code: 404
+
+# Firewall (if using firewalld or ufw)
+shadowgate_manage_firewall: false
+shadowgate_firewall_zones: []
