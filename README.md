@@ -1,5 +1,25 @@
 # ShadowGate
 
+[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go&logoColor=white)](https://go.dev/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/alokemajumder/shadowgate)](https://goreportcard.com/report/github.com/alokemajumder/shadowgate)
+[![Tests](https://img.shields.io/badge/Tests-80+-success?style=flat&logo=checkmarx&logoColor=white)](https://github.com/alokemajumder/shadowgate)
+[![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white)](Dockerfile)
+[![Platform](https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey?style=flat)](https://github.com/alokemajumder/shadowgate)
+
+[![Reverse Proxy](https://img.shields.io/badge/Feature-Reverse%20Proxy-orange?style=flat)](docs/CONFIG.md)
+[![GeoIP Filtering](https://img.shields.io/badge/Feature-GeoIP%20Filtering-orange?style=flat)](docs/CONFIG.md)
+[![Rate Limiting](https://img.shields.io/badge/Feature-Rate%20Limiting-orange?style=flat)](docs/CONFIG.md)
+[![TLS Termination](https://img.shields.io/badge/Feature-TLS%20Termination-orange?style=flat)](docs/CONFIG.md)
+[![Hot Reload](https://img.shields.io/badge/Feature-Hot%20Reload-orange?style=flat)](docs/CONFIG.md)
+[![Admin API](https://img.shields.io/badge/Feature-Admin%20API-orange?style=flat)](docs/API.md)
+
+[![Terraform](https://img.shields.io/badge/IaC-Terraform-7B42BC?style=flat&logo=terraform&logoColor=white)](deploy/terraform/)
+[![Ansible](https://img.shields.io/badge/IaC-Ansible-EE0000?style=flat&logo=ansible&logoColor=white)](deploy/ansible/)
+[![systemd](https://img.shields.io/badge/Service-systemd-FCC624?style=flat&logo=linux&logoColor=black)](deploy/systemd/)
+
+---
+
 A high-performance stealth redirector and deception gateway written in Go. ShadowGate sits in front of backend servers to filter traffic, serve decoys to unwanted visitors, and protect infrastructure from scanners and automated tools.
 
 ## Features
@@ -37,7 +57,7 @@ A high-performance stealth redirector and deception gateway written in Go. Shado
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/shadowgate.git
+git clone https://github.com/alokemajumder/shadowgate.git
 cd shadowgate
 
 # Build binary
